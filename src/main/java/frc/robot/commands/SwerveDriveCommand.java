@@ -2,6 +2,10 @@ package frc.robot.commands;
 
 import java.util.Map;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTable;
@@ -12,6 +16,7 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants.swerveConstants.swerveModules;
 import frc.robot.subsystems.SwerveDrivetrain;
 
 public class SwerveDriveCommand extends CommandBase {
@@ -29,10 +34,7 @@ public class SwerveDriveCommand extends CommandBase {
   double kMaxAngle = 2*Math.PI;
   
   public SwerveDriveCommand(SwerveDrivetrain drivetrain, XboxController controller) {
-    //NetworkTableEntry value = tab.add("kMaxSpeed", 3).withWidget(BuiltInWidgets.kNumberSlider).withProperties(Map.of("min", 0, "max", 3)).getEntry();
-    //kMaxSpeed = value.getDouble(0.0);
-    //NetworkTableEntry value2 = tab.add("kMaxRotation", 3).withWidget(BuiltInWidgets.kNumberSlider).withProperties(Map.of("min", 0, "max", 3)).getEntry();
-    //kMaxAngle = value2.getDouble(0.0);
+    
     this.drivetrain = drivetrain;
     this.tankDrive = tankDrive;
     addRequirements(drivetrain);
@@ -54,18 +56,18 @@ public class SwerveDriveCommand extends CommandBase {
     rotControllerSpeed = Math.abs(rotControllerSpeed) > maxControllerNumber ? rotControllerSpeed : 0.0;
     
     final var xSpeed =
-      (-xspeedLimiter.calculate(xControllerSpeed)* Math.abs(xspeedLimiter.calculate(xControllerSpeed)))
+      (-xspeedLimiter.calculate(xControllerSpeed)* Math.abs(xspeedLimiter.calculate(xControllerSpeed)/2))
         * kMaxSpeed;
 
     final var ySpeed =
       (-yspeedLimiter.calculate(yControllerSpeed) * Math.abs(yspeedLimiter.calculate(yControllerSpeed)))
         * kMaxSpeed;
     final var rot =
-      (-rotLimiter.calculate(rotControllerSpeed) * Math.abs(rotLimiter.calculate(rotControllerSpeed)))
+      (-rotLimiter.calculate(rotControllerSpeed) * Math.abs(rotLimiter.calculate(rotControllerSpeed)/2))
         * kMaxAngle;
 
     boolean fieldRelative = controller.getLeftBumper();
-      drivetrain.drive(xSpeed, ySpeed, rot, fieldRelative);
+  
+    drivetrain.drive(xSpeed, ySpeed, rot, fieldRelative); 
   }
-
 }

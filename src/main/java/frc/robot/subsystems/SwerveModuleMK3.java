@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.RemoteSensorSource;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
@@ -32,6 +33,7 @@ public class SwerveModuleMK3 {
   double angleOffset = 0;
 
   double lastAngle;
+  //FIXME: This changed
   private static double kEncoderTicksPerRotation = 4096;
 
   private TalonFX driveMotor;
@@ -54,8 +56,6 @@ public class SwerveModuleMK3 {
   }
 
   public Rotation2d getAngle() {
-
-
        return Rotation2d.fromDegrees(canCoder.getPosition());
   }
 
@@ -73,11 +73,12 @@ public class SwerveModuleMK3 {
     double angle = (Math.abs(desiredState.speedMetersPerSecond) <= (SwerveDrivetrain.kMaxSpeed * 0.01)) ? lastAngle : desiredState.angle.getDegrees();
     lastAngle = angle;
 
+    //FIXME: This changed (wasn't /4)
     angleMotor.set(TalonFXControlMode.Position, desiredTicks);
 
     //angleMotor.set(ControlMode.Position, degreesToFalcon(angle, swerveConstants.angleGearRatio));
-
     driveMotor.set(TalonFXControlMode.PercentOutput, state2.speedMetersPerSecond / SwerveDrivetrain.kMaxSpeed);
+
   }
   
   public double getRawAngle() {
@@ -95,7 +96,7 @@ public class SwerveModuleMK3 {
   
   public void configAngleTalon(){
     TalonFXConfiguration angleTalonFXConfiguration = new TalonFXConfiguration();
-    
+    angleMotor.configFactoryDefault();
     angleTalonFXConfiguration.slot0.kP = kAngleP;
     angleTalonFXConfiguration.slot0.kI = kAngleI;
     angleTalonFXConfiguration.slot0.kD = kAngleD;
@@ -104,27 +105,22 @@ public class SwerveModuleMK3 {
     angleTalonFXConfiguration.remoteFilter0.remoteSensorSource = RemoteSensorSource.CANCoder;
     angleTalonFXConfiguration.primaryPID.selectedFeedbackSensor = FeedbackDevice.RemoteSensor0;
     angleMotor.configAllSettings(angleTalonFXConfiguration);
-
-    //TODO: THIS CHANGED
     resetAngleTalon();
   }
-    //TODO: THIS IS NEW
   public void resetAngleTalon(){
       double absolutePosition = degreesToFalcon(canCoder.getAbsolutePosition() - angleOffset, swerveConstants.angleGearRatio);
       angleMotor.setSelectedSensorPosition(absolutePosition);
   }
   public void configDriveTalon(){
     TalonFXConfiguration driveTalonFXConfiguration = new TalonFXConfiguration();
-
+    driveMotor.configFactoryDefault();
+    driveMotor.setSelectedSensorPosition(0);
     driveTalonFXConfiguration.slot0.kP = kDriveP;
     driveTalonFXConfiguration.slot0.kI = kDriveI;
     driveTalonFXConfiguration.slot0.kD = kDriveD;
     driveTalonFXConfiguration.slot0.kF = kDriveF;
-
+  
     driveMotor.configAllSettings(driveTalonFXConfiguration);
-
-    //TODO THIS CHANGED:
-    driveMotor.setSelectedSensorPosition(0);
   }
 
   //CONVERSIONS:

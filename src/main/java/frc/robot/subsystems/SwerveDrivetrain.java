@@ -4,20 +4,29 @@
 
 package frc.robot.subsystems;
 import com.kauailabs.navx.frc.AHRS;
+// import com.pathplanner.lib.PathPlannerTrajectory;
+// import com.pathplanner.lib.commands.PPSwerveControllerCommand;
+
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants.swerveConstants.swerveModules;
+import frc.robot.Constants;
+import frc.robot.Constants.autoConstants;
 import frc.robot.Constants.swerveConstants;
-
-
 
 public class SwerveDrivetrain extends SubsystemBase {
 
@@ -34,10 +43,13 @@ public class SwerveDrivetrain extends SubsystemBase {
   private Field2d field2d = new Field2d();
 
   private final static AHRS gyro = new AHRS(SerialPort.Port.kMXP);
-  
-  
-  public SwerveDrivetrain() {
-    swerveOdometry = new SwerveDriveOdometry(swerveConstants.kinematics, gyro.getRotation2d());
+         
+  public ProfiledPIDController thetaController =
+  new ProfiledPIDController(
+      5, 0, 0, autoConstants.kThetaControllerConstraints);
+
+      public SwerveDrivetrain() {
+    swerveOdometry = new SwerveDriveOdometry(swerveConstants.kinematics, getGyro());
     zeroGyro();
     SmartDashboard.putData(field2d);
     SmartDashboard.putNumber("Gyro Angle", getGyro().getDegrees());
@@ -62,7 +74,7 @@ public class SwerveDrivetrain extends SubsystemBase {
                       xSpeed, 
                       ySpeed, 
                       rotation, 
-                      gyro.getRotation2d())
+                      getGyro())
                   : new ChassisSpeeds(
                       xSpeed, 
                       ySpeed, 
@@ -82,29 +94,40 @@ public class SwerveDrivetrain extends SubsystemBase {
     for (int i = 0; i < states.length; i++) {
       SwerveModuleMK3 module = modules[i];
       SwerveModuleState state = states[i];
-      if(SmartDashboard.getBoolean("Run Swerve", false)){
         module.setDesiredState(state);
-      }
     }
-  }
-
+    updateOdometry();
+    SmartDashboard.putNumber("Gyro X", gyro.getDisplacementX());
+    SmartDashboard.putNumber("Gyro Y", gyro.getDisplacementY());
+    SmartDashboard.putNumber("Pose X", getPose().getX());
+    SmartDashboard.putNumber("Pose Y", getPose().getY());
+    SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
+    
+    SmartDashboard.putNumber("Gyro Pose X", getGyroPose().getX());
+    SmartDashboard.putNumber("Gyro Pose Y", getGyroPose().getY());
+  
+}
   public Pose2d getPose(){
     return swerveOdometry.getPoseMeters();
   }
-
+  public Pose2d getGyroPose(){
+    return new Pose2d(new Translation2d(gyro.getDisplacementX(), gyro.getDisplacementY()), getGyro());  
+  }
 
   public void resetOdometry(Pose2d pose){
     swerveOdometry.resetPosition(pose, getGyro());
   }
+  
   public void resetFieldPosition(){
     zeroGyro();
-    //FIXME: Used to be: new Pose2d(getPose().getTranslation, new Rotation2d()), ...
+    gyro.resetDisplacement();
     swerveOdometry.resetPosition(new Pose2d(getPose().getTranslation(), new Rotation2d()), getGyro());
   }
   
-  public void zeroGyro() {
-    gyro.reset();
- }
+ public void zeroGyro(){
+   gyro.zeroYaw();
+  }
+
   public SwerveModuleState[] getStates(){
     SwerveModuleState[] states = new SwerveModuleState[4];
     for(int i = 0; i < modules.length; i ++){
@@ -115,11 +138,41 @@ public class SwerveDrivetrain extends SubsystemBase {
 
   public void updateOdometry(){
     swerveOdometry.update(getGyro(), getStates());
-    field2d.setRobotPose(getPose());
   }
   public Rotation2d getGyro(){
-    //TODO: Make sure that 360 - etc works
+    //FIXME: this is new
+    if(gyro.isMagnetometerCalibrated()){
+      return Rotation2d.fromDegrees(gyro.getFusedHeading());
+    }
     return Rotation2d.fromDegrees(360- gyro.getYaw());
   }
+
+  
+  public Command createCommandForTrajectory(Trajectory trajectory) {
+    return new SwerveControllerCommand(
+          trajectory,
+          this::getPose,
+          swerveConstants.kinematics,
+          new PIDController(1, 0, 0),
+          new PIDController(1, 0, 0),
+          thetaController,
+          this::setDesiredState,
+          this
+    );
+  }
+  
+  // public Command createCommandForPathPlanner(PathPlannerTrajectory trajectory) {
+  //   return new PPSwerveControllerCommand(
+  //         trajectory,
+  //         this::getPose,
+  //         swerveConstants.kinematics,
+  //         new PIDController(5, 0, 0),
+  //         new PIDController(5, 0, 0),
+  //         thetaController,
+  //         this::setDesiredState,
+  //         this
+  //   );
+  // }
+
 
 }

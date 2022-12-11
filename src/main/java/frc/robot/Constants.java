@@ -51,8 +51,8 @@ public class Constants {
           Constants.Chassis_Length/2
         )
       );
-      public static final double driveGearRatio = 6.75;
-      public static final double angleGearRatio = 21.43;
+      public static final double driveGearRatio = 8.14;
+      public static final double angleGearRatio = 12.8;
     
       public static final double wheelDiameter = Units.inchesToMeters(4.0);
       public static final double wheelCircumference = wheelDiameter * Math.PI;
@@ -101,8 +101,10 @@ public class Constants {
                 kSlowAccelerationMetersPerSecondSquared)    
                 .setKinematics(swerveConstants.kinematics)
                         .setStartVelocity(0)
-                        .setEndVelocity(0); 
-
+                        .setEndVelocity(0);
+          public static final TrapezoidProfile.Constraints kThetaControllerConstraints =
+          new TrapezoidProfile.Constraints(
+              Math.PI, Math.PI);
     }
 
     public final static double Chassis_Length = 0.517;

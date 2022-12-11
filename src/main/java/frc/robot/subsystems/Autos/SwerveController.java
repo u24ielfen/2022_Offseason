@@ -16,7 +16,7 @@ public class SwerveController {
       
     
     TrapezoidProfile.Constraints kThetaControllerConstraints = 
-        new TrapezoidProfile.Constraints(Math.PI, 2 / Math.PI);
+        new TrapezoidProfile.Constraints(0.5*Math.PI, 1/Math.PI);
     var thetaController = new ProfiledPIDController(5, 0, 0, kThetaControllerConstraints);
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
     
