@@ -12,11 +12,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
+import frc.robot.subsystems.SwerveDrivetrain;
 public class Robot extends TimedRobot {
 
   private RobotContainer robotContainer;
   private Command m_autonomousCommand;
   public SendableChooser<String> chooser = new SendableChooser<>();
+  SwerveDrivetrain drivetrain = new SwerveDrivetrain();
 
 
   /**
@@ -68,6 +70,7 @@ public class Robot extends TimedRobot {
     //   System.out.println("Non");
     //   nonTraj.routine();
     // }
+      
   }
 
   @Override

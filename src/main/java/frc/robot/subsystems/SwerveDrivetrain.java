@@ -3,6 +3,12 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.subsystems;
+import java.util.ArrayList;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 // import com.pathplanner.lib.PathPlannerTrajectory;
 // import com.pathplanner.lib.commands.PPSwerveControllerCommand;
@@ -20,6 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -32,8 +39,9 @@ public class SwerveDrivetrain extends SubsystemBase {
 
   public static final double kMaxSpeed = 1;
 
-  public static final double kMaxAngularSpeed = Math.PI;
 
+  public static final double kMaxAngularSpeed = Math.PI;
+  
   SwerveDriveOdometry swerveOdometry;
 
   SwerveModuleMK3[] modules;
@@ -43,7 +51,7 @@ public class SwerveDrivetrain extends SubsystemBase {
   private Field2d field2d = new Field2d();
 
   private final static AHRS gyro = new AHRS(SerialPort.Port.kMXP);
-         
+  
   public ProfiledPIDController thetaController =
   new ProfiledPIDController(
       5, 0, 0, autoConstants.kThetaControllerConstraints);
@@ -79,34 +87,41 @@ public class SwerveDrivetrain extends SubsystemBase {
                       xSpeed, 
                       ySpeed, 
                       rotation));
-                      setDesiredState(states);
-                      updateOdometry();
-                      field2d.setRobotPose(getPose());
-                    }
 
-                    public void stopDrivetrain(){
-                      states = swerveConstants.kinematics.toSwerveModuleStates(
-                        new ChassisSpeeds(0, 0, 0));  
-                        setDesiredState(states);
-                      }
-  public void setDesiredState(SwerveModuleState[] states){
+    setDesiredState(states);
+  }
+  
+  public void stopDrivetrain(){
+    states = swerveConstants.kinematics.toSwerveModuleStates(
+      new ChassisSpeeds(0, 0, 0));  
+      setDesiredState(states);
+    }
+    public void setDesiredState(SwerveModuleState[] states){
+      
+      updateOdometry();
+      field2d.setRobotPose(getPose());
+    // SmartDashboard.putNumber("Gyro X", gyro.getDisplacementX());
+    // SmartDashboard.putNumber("Gyro Y", gyro.getDisplacementY());
+    // SmartDashboard.putNumber("Pose X", getPose().getX());
+    // SmartDashboard.putNumber("Pose Y", getPose().getY());
+    // SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
+    
+    // SmartDashboard.putNumber("Gyro Pose X", getGyroPose().getX());
+    // SmartDashboard.putNumber("Gyro Pose Y", getGyroPose().getY());
     SwerveDriveKinematics.desaturateWheelSpeeds(states, kMaxSpeed);
     for (int i = 0; i < states.length; i++) {
       SwerveModuleMK3 module = modules[i];
       SwerveModuleState state = states[i];
         module.setDesiredState(state);
-    }
-    updateOdometry();
-    SmartDashboard.putNumber("Gyro X", gyro.getDisplacementX());
-    SmartDashboard.putNumber("Gyro Y", gyro.getDisplacementY());
-    SmartDashboard.putNumber("Pose X", getPose().getX());
-    SmartDashboard.putNumber("Pose Y", getPose().getY());
-    SmartDashboard.putNumber("Gyro Angle", gyro.getAngle());
-    
-    SmartDashboard.putNumber("Gyro Pose X", getGyroPose().getX());
-    SmartDashboard.putNumber("Gyro Pose Y", getGyroPose().getY());
+        SmartDashboard.putNumber("Cancoder Values for: " + modules[i].toString(), modules[i].getAngle().getDegrees());
+      }
   
 }
+  public void resetAlignmentWheels(){
+    for(int i = 0; i <= 4; i ++){
+      modules[i].resetWheelPosition();
+    }
+  }
   public Pose2d getPose(){
     return swerveOdometry.getPoseMeters();
   }
@@ -120,12 +135,12 @@ public class SwerveDrivetrain extends SubsystemBase {
   
   public void resetFieldPosition(){
     zeroGyro();
-    gyro.resetDisplacement();
     swerveOdometry.resetPosition(new Pose2d(getPose().getTranslation(), new Rotation2d()), getGyro());
   }
   
  public void zeroGyro(){
    gyro.zeroYaw();
+   gyro.resetDisplacement();
   }
 
   public SwerveModuleState[] getStates(){
@@ -133,6 +148,8 @@ public class SwerveDrivetrain extends SubsystemBase {
     for(int i = 0; i < modules.length; i ++){
       states[i] = modules[i].getState();
     }
+    SmartDashboard.putNumber("NAV_X", gyro.getDisplacementX());
+    SmartDashboard.putNumber("NAV_Y", gyro.getDisplacementY());
     return states;
   }
 
@@ -141,10 +158,11 @@ public class SwerveDrivetrain extends SubsystemBase {
   }
   public Rotation2d getGyro(){
     //FIXME: this is new
-    if(gyro.isMagnetometerCalibrated()){
-      return Rotation2d.fromDegrees(gyro.getFusedHeading());
-    }
+    // if(gyro.isMagnetometerCalibrated()){
+    //   return Rotation2d.fromDegrees(gyro.getFusedHeading());
+    // }
     return Rotation2d.fromDegrees(360- gyro.getYaw());
+    
   }
 
   
@@ -173,6 +191,5 @@ public class SwerveDrivetrain extends SubsystemBase {
   //         this
   //   );
   // }
-
 
 }

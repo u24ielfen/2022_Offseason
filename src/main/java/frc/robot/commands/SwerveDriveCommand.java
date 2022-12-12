@@ -42,7 +42,12 @@ public class SwerveDriveCommand extends CommandBase {
     this.controller = controller;
   }
   double maxControllerNumber = 0.1;
-
+  public void halfSpeed(){
+    if(kMaxSpeed == 2){
+      kMaxSpeed = 0.5;
+    }
+    
+  }
   @Override
   public void execute() {
     double xControllerSpeed = controller.getLeftY();
@@ -56,14 +61,14 @@ public class SwerveDriveCommand extends CommandBase {
     rotControllerSpeed = Math.abs(rotControllerSpeed) > maxControllerNumber ? rotControllerSpeed : 0.0;
     
     final var xSpeed =
-      (-xspeedLimiter.calculate(xControllerSpeed)* Math.abs(xspeedLimiter.calculate(xControllerSpeed)/2))
+      (-xspeedLimiter.calculate(xControllerSpeed)* Math.abs(xspeedLimiter.calculate(xControllerSpeed)))
         * kMaxSpeed;
 
     final var ySpeed =
       (-yspeedLimiter.calculate(yControllerSpeed) * Math.abs(yspeedLimiter.calculate(yControllerSpeed)))
         * kMaxSpeed;
     final var rot =
-      (-rotLimiter.calculate(rotControllerSpeed) * Math.abs(rotLimiter.calculate(rotControllerSpeed)/2))
+      (-rotLimiter.calculate(rotControllerSpeed) * Math.abs(rotLimiter.calculate(rotControllerSpeed)))
         * kMaxAngle;
 
     boolean fieldRelative = controller.getLeftBumper();

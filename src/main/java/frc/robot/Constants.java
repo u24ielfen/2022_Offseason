@@ -51,8 +51,10 @@ public class Constants {
           Constants.Chassis_Length/2
         )
       );
-      public static final double driveGearRatio = 8.14;
+      public static final double driveGearRatio = 6.75;
       public static final double angleGearRatio = 12.8;
+      //public static final double angleGearRatio = 150/7.0;
+
     
       public static final double wheelDiameter = Units.inchesToMeters(4.0);
       public static final double wheelCircumference = wheelDiameter * Math.PI;

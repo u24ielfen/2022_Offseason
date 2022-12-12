@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.RemoteSensorSource;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -13,6 +14,7 @@ import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.Constants.swerveConstants;
 import frc.robot.Constants.swerveConstants.swerveModules;
@@ -30,7 +32,7 @@ public class SwerveModuleMK3 {
   private static final double kAngleD = 0.0;
 
   //TODO: Change?
-  double angleOffset = 0;
+  Rotation2d offset;
 
   double lastAngle;
   //FIXME: This changed
@@ -44,7 +46,7 @@ public class SwerveModuleMK3 {
     this.driveMotor = driveMotor;
     this.angleMotor = angleMotor;
     this.canCoder = canCoder;
-
+    this.offset = offset;
     configAngleTalon();
     configDriveTalon();
 
@@ -60,6 +62,11 @@ public class SwerveModuleMK3 {
   }
 
   public void setDesiredState(SwerveModuleState desiredState) {
+    if(SmartDashboard.getBoolean("Run Swerve", false)){
+      driveMotor.setNeutralMode(NeutralMode.Coast);
+    }
+    else{
+
     Rotation2d currentRotation = getAngle();
     
     //SwerveModuleState state = CTREModuleState.optimize(desiredState, getState().angle);
@@ -78,6 +85,7 @@ public class SwerveModuleMK3 {
 
     //angleMotor.set(ControlMode.Position, degreesToFalcon(angle, swerveConstants.angleGearRatio));
     driveMotor.set(TalonFXControlMode.PercentOutput, state2.speedMetersPerSecond / SwerveDrivetrain.kMaxSpeed);
+  }
 
   }
   
@@ -87,11 +95,30 @@ public class SwerveModuleMK3 {
   public void setRawAngle(){
     canCoder.setPosition(0);
   }
+  private static final double kWheelRadius = 0.0508;
+  private static final int kEncoderResolution = 2048;
+
+  private static final double kDriveGearing = 8.14; // to 1
+  private static final double kTurningGearing = 12.8; // to 1
+
+  private static final double kDriveTicksToMeters = 2 * Math.PI * kWheelRadius / kEncoderResolution / kDriveGearing;
+  private static final double kDriveTicksToMetersPerSecond = kDriveTicksToMeters * 10;
+  private static final double kTurningTicksToRadians = 2 * Math.PI / kEncoderResolution / kTurningGearing;
+
 
   public SwerveModuleState getState(){
-    double velocity = falconToMPS(driveMotor.getSelectedSensorPosition(), swerveConstants.wheelCircumference, swerveConstants.driveGearRatio);
-    Rotation2d angle = Rotation2d.fromDegrees(falconToDegrees(angleMotor.getSelectedSensorPosition(), Constants.swerveConstants.angleGearRatio));
-    return new SwerveModuleState(velocity, angle);
+    // double velocity = falconToMPS(driveMotor.getSelectedSensorVelocity(), swerveConstants.wheelCircumference, swerveConstants.driveGearRatio);
+    // Rotation2d angle = Rotation2d.fromDegrees(falconToDegrees(angleMotor.getSelectedSensorPosition(), Constants.swerveConstants.angleGearRatio));
+    // return new SwerveModuleState(velocity, angle);
+    return new SwerveModuleState(
+      driveMotor.getSelectedSensorVelocity() * kDriveTicksToMetersPerSecond,
+      new Rotation2d(angleMotor.getSelectedSensorPosition() * kTurningTicksToRadians)
+     );
+  }
+
+  public void resetWheelPosition(){
+    canCoder.setPosition(0);
+    angleMotor.setSelectedSensorPosition(0);
   }
   
   public void configAngleTalon(){
@@ -108,8 +135,9 @@ public class SwerveModuleMK3 {
     resetAngleTalon();
   }
   public void resetAngleTalon(){
-      double absolutePosition = degreesToFalcon(canCoder.getAbsolutePosition() - angleOffset, swerveConstants.angleGearRatio);
+      double absolutePosition = degreesToFalcon(canCoder.getAbsolutePosition() - offset.getDegrees(), swerveConstants.angleGearRatio);
       angleMotor.setSelectedSensorPosition(absolutePosition);
+      resetToZero();
   }
   public void configDriveTalon(){
     TalonFXConfiguration driveTalonFXConfiguration = new TalonFXConfiguration();
@@ -122,7 +150,10 @@ public class SwerveModuleMK3 {
   
     driveMotor.configAllSettings(driveTalonFXConfiguration);
   }
-
+  public void resetToZero(){
+    double absolutePosition = degreesToFalcon(Rotation2d.fromDegrees(canCoder.getAbsolutePosition()).getDegrees(), swerveConstants.angleGearRatio);
+    angleMotor.setSelectedSensorPosition(absolutePosition);
+  }
   //CONVERSIONS:
   public static double falconToMPS(double velocitycounts, double circumference, double gearRatio){
     double wheelRPM = falconToRPM(velocitycounts, gearRatio);
