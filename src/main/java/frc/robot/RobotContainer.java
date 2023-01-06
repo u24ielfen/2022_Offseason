@@ -24,7 +24,6 @@ import frc.robot.Constants.autoConstants;
 import frc.robot.Constants.swerveConstants;
 import frc.robot.commands.SwerveDriveCommand;
 import frc.robot.subsystems.SwerveDrivetrain;
-import frc.robot.subsystems.Autos.SwerveController;
 import frc.robot.subsystems.Autos.AutoMoves.ZeroTo;
 
 public class RobotContainer {
