@@ -20,7 +20,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.swerveConstants;
 import frc.robot.Constants.swerveConstants.swerveModules;
 
-public class SwerveModuleMK3 {
+public class Modules {
 
   private static final double kDriveP = 15.0;
   private static final double kDriveI = 0.01;
@@ -30,19 +30,15 @@ public class SwerveModuleMK3 {
   private static final double kAngleP = 1.0;
   private static final double kAngleI = 0.0;
   private static final double kAngleD = 0.0;
-
-  //TODO: Change?
+  //have different system?:
   Rotation2d offset;
-
   double lastAngle;
-  //FIXME: This changed
-  private static double kEncoderTicksPerRotation = 4096;
 
   private TalonFX driveMotor;
   private TalonFX angleMotor;
   private CANCoder canCoder;
 
-  public SwerveModuleMK3(TalonFX driveMotor, TalonFX angleMotor, CANCoder canCoder, Rotation2d offset) {
+  public Modules(TalonFX driveMotor, TalonFX angleMotor, CANCoder canCoder, Rotation2d offset) {
     this.driveMotor = driveMotor;
     this.angleMotor = angleMotor;
     this.canCoder = canCoder;
