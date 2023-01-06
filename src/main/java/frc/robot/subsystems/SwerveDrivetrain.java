@@ -63,10 +63,10 @@ public class SwerveDrivetrain extends SubsystemBase {
     SmartDashboard.putNumber("Gyro Angle", getGyro().getDegrees());
     SmartDashboard.putBoolean("Run Swerve", true);
     modules = new SwerveModuleMK3[] {
-      new SwerveModuleMK3(swerveModules.front_right_drive, swerveModules.front_right_turn, swerveModules.front_right_encoder, Rotation2d.fromDegrees(0)),
-      new SwerveModuleMK3(swerveModules.front_left_drive, swerveModules.front_left_turn, swerveModules.front_left_encoder, Rotation2d.fromDegrees(0)),
-      new SwerveModuleMK3(swerveModules.back_right_drive, swerveModules.back_right_turn, swerveModules.back_right_encoder, Rotation2d.fromDegrees(0)),
-      new SwerveModuleMK3(swerveModules.back_left_drive, swerveModules.back_left_turn, swerveModules.back_left_encoder, Rotation2d.fromDegrees(0))
+      new SwerveModuleMK3(swerveModules.front_left_drive, swerveModules.front_left_turn, swerveModules.front_left_encoder, Rotation2d.fromDegrees(-9.6679)),
+      new SwerveModuleMK3(swerveModules.front_right_drive, swerveModules.front_right_turn, swerveModules.front_right_encoder, Rotation2d.fromDegrees(17.929)),
+      new SwerveModuleMK3(swerveModules.back_left_drive, swerveModules.back_left_turn, swerveModules.back_left_encoder, Rotation2d.fromDegrees(-38.05664)),
+      new SwerveModuleMK3(swerveModules.back_right_drive, swerveModules.back_right_turn, swerveModules.back_right_encoder, Rotation2d.fromDegrees(40.07811))
     };  
     swerveModules.back_left_drive.setInverted(true);
     swerveModules.back_right_drive.setInverted(true);
@@ -109,19 +109,12 @@ public class SwerveDrivetrain extends SubsystemBase {
     // SmartDashboard.putNumber("Gyro Pose X", getGyroPose().getX());
     // SmartDashboard.putNumber("Gyro Pose Y", getGyroPose().getY());
     SwerveDriveKinematics.desaturateWheelSpeeds(states, kMaxSpeed);
-    for (int i = 0; i < states.length; i++) {
-      SwerveModuleMK3 module = modules[i];
-      SwerveModuleState state = states[i];
-        module.setDesiredState(state);
-        SmartDashboard.putNumber("Cancoder Values for: " + modules[i].toString(), modules[i].getAngle().getDegrees());
-      }
+    modules[0].setDesiredState(states[0]);
+    modules[1].setDesiredState(states[1]);
+    modules[2].setDesiredState(states[2]);
+    modules[3].setDesiredState(states[3]);
   
 }
-  public void resetAlignmentWheels(){
-    for(int i = 0; i <= 4; i ++){
-      modules[i].resetWheelPosition();
-    }
-  }
   public Pose2d getPose(){
     return swerveOdometry.getPoseMeters();
   }
@@ -130,6 +123,7 @@ public class SwerveDrivetrain extends SubsystemBase {
   }
 
   public void resetOdometry(Pose2d pose){
+    gyro.setAngleAdjustment( (-1) * pose.getRotation().getDegrees());
     swerveOdometry.resetPosition(pose, getGyro());
   }
   

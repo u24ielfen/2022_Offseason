@@ -46,6 +46,9 @@ public class SwerveDriveCommand extends CommandBase {
     if(kMaxSpeed == 2){
       kMaxSpeed = 0.5;
     }
+    else if (kMaxSpeed == 0.5){
+      kMaxSpeed = 2;
+    }
     
   }
   @Override
